@@ -2,37 +2,79 @@ const passport = require('passport');
 const Strategy = require('passport-google-oauth').OAuth2Strategy;
 const User = require('./models/User');
 
-function setupGoogle({ ROOT_URL, server }) {
-    passport.use(new Strategy(
-      // 1. define `verify` method: get profile and googleToken from Google
-      const verify = async (accessToken, refreshToken, profile, verified) => {
-        let email;
-        let avatarUrl;
-     
-        if (profile.emails) {
-          email = profile.emails[0].value;
-        }
-     
-        if (profile.photos && profile.photos.length > 0) {
-          avatarUrl = profile.photos[0].value.replace('sz=50', 'sz=128');
-        }
-     
-        // call and wait for `User.signInOrSignUp`
-      };
-      // 2. call and wait for static method `User.signInOrSignUp` to return created or existing user 
+function setupGoogle({ server, ROOT_URL }) {
+  const verify = async (accessToken, refreshToken, profile, verified) => {
+    let email;
+    let avatarUrl;
+
+    if (profile.emails) {
+      email = profile.emails[0].value;
+    }
+
+    if (profile.photos && profile.photos.length > 0) {
+      avatarUrl = profile.photos[0].value.replace('sz=50', 'sz=128');
+    }
+
+    try {
+      const user = await User.signInOrSignUp({
+        googleId: profile.id,
+        email,
+        googleToken: { accessToken, refreshToken },
+        displayName: profile.displayName,
+        avatarUrl,
+      });
+      verified(null, user);
+    } catch (err) {
+      verified(err);
+      console.log(err);
+    }
+  };
+  passport.use(
+    new Strategy(
       {
         clientID: process.env.GOOGLE_CLIENTID,
         clientSecret: process.env.GOOGLE_CLIENTSECRET,
-        callbackURL: `${ROOT_URL}/auth/google/callback`
+        callbackURL: `${ROOT_URL}/oauth2callback`,
       },
-      verify
-    ))
-  
-    // 3. serialize user AND deserialize user;
-  
-    // 4. initialize passport AND passport's session
-  
-    // 5. Define Express routes (/auth/google, /oauth2callback, /logout)
-  }
-  
-  module.exports = setupGoogle;
+      verify,
+    ),
+  );
+
+  passport.serializeUser((user, done) => {
+    done(null, user.id);
+  });
+
+  passport.deserializeUser((id, done) => {
+    User.findById(id, User.publicFields(), (err, user) => {
+      done(err, user);
+    });
+  });
+
+  server.use(passport.initialize());
+  server.use(passport.session());
+
+  server.get(
+    '/auth/google',
+    passport.authenticate('google', {
+      scope: ['profile', 'email'],
+      prompt: 'select_account',
+    }),
+  );
+
+  server.get(
+    '/oauth2callback',
+    passport.authenticate('google', {
+      failureRedirect: '/login',
+    }),
+    (_, res) => {
+      res.redirect('/');
+    },
+  );
+
+  server.get('/logout', (req, res) => {
+    req.logout();
+    res.redirect('/login');
+  });
+}
+
+module.exports = setupGoogle;
