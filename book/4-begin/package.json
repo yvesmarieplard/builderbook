@@ -6,7 +6,11 @@
     "dev": "nodemon server/server.js --watch server",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint '**/*.js' '**/*.jsx'"
+    "lint": "eslint '**/*.js' '**/*.jsx'",
+    "test": "jest --coverage",
+    "jest": {
+      "coverageDirectory": "./.coverage"
+    }
   },
   "dependencies": {
     "@material-ui/core": "^4.11.4",
