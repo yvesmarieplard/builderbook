@@ -4,6 +4,8 @@ const mongoSessionStore = require('connect-mongo');
 const next = require('next');
 const mongoose = require('mongoose');
 
+const Chapter = require('./models/Chapter');
+
 const setupGoogle = require('./google');
 const { insertTemplates } = require('./models/EmailTemplate');
 
@@ -53,6 +55,7 @@ app.prepare().then(async () => {
   setupGoogle({ server, ROOT_URL });
 
   server.get('*', (req, res) => handle(req, res));
+
 
   server.listen(port, (err) => {
     if (err) throw err;

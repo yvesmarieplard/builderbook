@@ -7,6 +7,8 @@ import Head from 'next/head';
 import Router from 'next/router';
 import NProgress from 'nprogress';
 
+import Notifier from '../components/Notifier';
+
 import { theme } from '../lib/theme';
 
 import Header from '../components/Header';
@@ -44,6 +46,7 @@ class MyApp extends App {
         <CssBaseline />
         <Header {...pageProps} />
         <Component {...pageProps} />
+        <Notifier />
       </ThemeProvider>
     );
   }
