@@ -21,4 +21,3 @@ export default async function sendRequest(path, options = {}) {
 
   return data;
 }
-
